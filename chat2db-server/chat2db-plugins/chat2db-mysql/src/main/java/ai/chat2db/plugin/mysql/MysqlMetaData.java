@@ -2,10 +2,8 @@ package ai.chat2db.plugin.mysql;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import ai.chat2db.plugin.mysql.builder.MysqlSqlBuilder;
 import ai.chat2db.plugin.mysql.type.*;
@@ -15,6 +13,7 @@ import ai.chat2db.spi.ValueHandler;
 import ai.chat2db.spi.jdbc.DefaultMetaService;
 import ai.chat2db.spi.model.*;
 import ai.chat2db.spi.sql.SQLExecutor;
+import ai.chat2db.spi.util.ResultSetUtils;
 import jakarta.validation.constraints.NotEmpty;
 import org.apache.commons.lang3.StringUtils;
 
@@ -231,9 +230,9 @@ public class MysqlMetaData extends DefaultMetaService implements MetaData {
                     index.setSchemaName(schemaName);
                     index.setTableName(tableName);
                     index.setName(keyName);
-                    index.setUnique(!resultSet.getBoolean("Non_unique"));
-                    index.setType(resultSet.getString("Index_type"));
-                    index.setComment(resultSet.getString("Index_comment"));
+                    index.setUnique(!ResultSetUtils.getColumnValue(resultSet, Boolean.class, "Non_unique"));
+                    index.setType(ResultSetUtils.getColumnValue(resultSet, String.class, "Index_type"));
+                    index.setComment(ResultSetUtils.getColumnValue(resultSet, String.class, "Index_comment"));
                     List<TableIndexColumn> tableIndexColumns = new ArrayList<>();
                     tableIndexColumns.add(getTableIndexColumn(resultSet));
                     index.setColumnList(tableIndexColumns);
@@ -251,19 +250,19 @@ public class MysqlMetaData extends DefaultMetaService implements MetaData {
                     map.put(keyName, index);
                 }
             }
-            return map.values().stream().collect(Collectors.toList());
+            return new ArrayList<>(map.values());
         });
 
     }
 
-    private TableIndexColumn getTableIndexColumn(ResultSet resultSet) throws SQLException {
+    private TableIndexColumn getTableIndexColumn(ResultSet resultSet) {
         TableIndexColumn tableIndexColumn = new TableIndexColumn();
-        tableIndexColumn.setColumnName(resultSet.getString("Column_name"));
-        tableIndexColumn.setOrdinalPosition(resultSet.getShort("Seq_in_index"));
-        tableIndexColumn.setCollation(resultSet.getString("Collation"));
-        tableIndexColumn.setCardinality(resultSet.getLong("Cardinality"));
-        tableIndexColumn.setSubPart(resultSet.getLong("Sub_part"));
-        String collation = resultSet.getString("Collation");
+        tableIndexColumn.setColumnName(ResultSetUtils.getColumnValue(resultSet, String.class, "Column_name"));
+        tableIndexColumn.setOrdinalPosition(ResultSetUtils.getColumnValue(resultSet, Short.class, "Seq_in_index"));
+        tableIndexColumn.setCollation(ResultSetUtils.getColumnValue(resultSet, String.class, "Collation"));
+        tableIndexColumn.setCardinality(ResultSetUtils.getColumnValue(resultSet, Long.class, "Cardinality"));
+        tableIndexColumn.setSubPart(ResultSetUtils.getColumnValue(resultSet, Long.class, "Sub_part"));
+        String collation = ResultSetUtils.getColumnValue(resultSet, String.class, "Collation");
         if ("a".equalsIgnoreCase(collation)) {
             tableIndexColumn.setAscOrDesc("ASC");
         } else if ("d".equalsIgnoreCase(collation)) {

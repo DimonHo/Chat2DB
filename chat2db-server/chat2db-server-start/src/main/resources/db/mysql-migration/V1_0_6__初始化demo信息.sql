@@ -1,0 +1,41 @@
+INSERT INTO data_source (gmt_create, gmt_modified, alias, url, user_name, password, type, user_id, host, port, ssh,jdbc)
+VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'DEMO@db.sqlgpt.cn', 'jdbc:mysql://db.sqlgpt.cn:3306/DEMO', 'demo', 'kok39AYoOSM=', 'MYSQL', 0, 'db.sqlgpt.cn', '3306', '{"use":false}', '8.0');
+
+INSERT INTO dashboard (id, gmt_create, gmt_modified, name, description, `schema`, deleted, user_id)
+VALUES (1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '学生成绩分析', '学生成绩分析', '[[1],[2],[3]]', 'N', 0);
+
+INSERT INTO chart (id, gmt_create, gmt_modified,  `schema`, data_source_id, database_name, ddl, deleted, user_id)
+VALUES (1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,  '{"chartType":"Column","xAxis":"name","yAxis":"total_score"}', 1, 'DEMO', 'SELECT s.name, sc.chinese_score, sc.math_score, sc.english_score, sc.science_score, sc.humanities_score,
+(sc.chinese_score + sc.math_score + sc.english_score + sc.science_score + sc.humanities_score) AS total_score
+FROM student s
+JOIN score sc ON s.id = sc.student_id', 'N', 0);
+
+INSERT INTO chart (id, gmt_create, gmt_modified,  `schema`, data_source_id, database_name, ddl, deleted, user_id)
+VALUES (2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, '{"chartType":"Pie","xAxis":"grade"}', 1, 'DEMO', 'SELECT s.name,
+       score.chinese_score,
+       score.math_score,
+       score.english_score,
+       score.science_score,
+       score.humanities_score,
+       (score.chinese_score + score.math_score + score.english_score + score.science_score + score.humanities_score) AS total_score,
+       CASE
+           WHEN (score.chinese_score + score.math_score + score.english_score + score.science_score + score.humanities_score) < 630 THEN "D"
+           WHEN (score.chinese_score + score.math_score + score.english_score + score.science_score + score.humanities_score) >= 630 AND (score.chinese_score + score.math_score + score.english_score + score.science_score + score.humanities_score) <= 735 THEN "C"
+           WHEN (score.chinese_score + score.math_score + score.english_score + score.science_score + score.humanities_score) > 840 THEN "A"
+           ELSE "B"
+       END AS grade
+FROM score
+JOIN student s ON score.student_id = s.id', 'N', 0);
+
+INSERT INTO chart (id, gmt_create, gmt_modified,  `schema`, data_source_id, database_name, ddl, deleted, user_id)
+VALUES (3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP,  '{"chartType":"Line","xAxis":"name","yAxis":"chinese_score"}', 1, 'DEMO', 'SELECT s.name, sc.chinese_score, sc.math_score, sc.english_score, sc.science_score, sc.humanities_score,
+(sc.chinese_score + sc.math_score + sc.english_score + sc.science_score + sc.humanities_score) AS total_score
+FROM student s
+JOIN score sc ON s.id = sc.student_id', 'N', 0);
+
+INSERT INTO dashboard_chart_relation (gmt_create, gmt_modified, dashboard_id, chart_id)
+VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 1);
+INSERT into dashboard_chart_relation (gmt_create, gmt_modified, dashboard_id, chart_id)
+VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 2);
+INSERT into dashboard_chart_relation (gmt_create, gmt_modified, dashboard_id, chart_id)
+VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 3);

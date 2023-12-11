@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    # docker run --name=mysql --env=MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -p 33060:33060 -d mysql:latest --lower_case_table_names=1
+    # 配置自带数据库的相对路径
+    url: jdbc:mysql://root:123456@localhost:3306/chat2db
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  #  用于数据库表结构版本管理
+  flyway:
+    locations: classpath:db/mysql-migration
+# 端口号
+server:
+  port: 10820
+
+chat2db:
+  gateway:
+    base-url: http://test.sqlgpt.cn/gateway
+    model-base-url: http://test.sqlgpt.cn/gateway

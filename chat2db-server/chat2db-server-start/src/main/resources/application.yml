@@ -27,9 +27,9 @@ spring:
   web:
     resources:
       static-locations[0]: classpath:/static/
-  #  用于数据库表结构版本管理
+  #  用于数据库表结构版本管理,如果是mysql库,请修改成 classpath:db/mysql-migration
   flyway:
-    locations: classpath:db/migration
+    locations: classpath:db/h2-migration
   servlet:
     multipart:
       max-file-size: -1
