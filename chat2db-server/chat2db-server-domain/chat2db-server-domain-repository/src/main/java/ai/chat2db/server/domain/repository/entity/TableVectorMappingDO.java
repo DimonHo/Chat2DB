@@ -18,7 +18,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@TableName("TABLE_VECTOR_MAPPING")
+@TableName("table_vector_mapping")
 public class TableVectorMappingDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -26,7 +26,7 @@ public class TableVectorMappingDO implements Serializable {
     /**
      * 主键
      */
-    @TableId(value = "ID", type = IdType.AUTO)
+    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
