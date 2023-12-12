@@ -16,7 +16,7 @@ public enum RoleCodeEnum implements BaseEnum<String> {
     DESKTOP("DESKTOP", 1L, "_desktop_default_user_name", "_desktop_default_user_name"),
 
     /**
-     * ADMIN
+     * ADMIN chat2db的密文：$2a$10$XRjuCZ1dRpY16axTHWnjV.ye1gXVCqN2m8TMCMy0izAsmxGzd9lR6
      */
     ADMIN("ADMIN", 2L, "chat2db", "chat2db"),
 

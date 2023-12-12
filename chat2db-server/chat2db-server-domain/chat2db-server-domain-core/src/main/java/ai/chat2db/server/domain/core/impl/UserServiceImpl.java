@@ -1,8 +1,5 @@
 package ai.chat2db.server.domain.core.impl;
 
-import java.util.List;
-import java.util.Objects;
-
 import ai.chat2db.server.domain.api.enums.AccessObjectTypeEnum;
 import ai.chat2db.server.domain.api.enums.RoleCodeEnum;
 import ai.chat2db.server.domain.api.model.User;
@@ -37,6 +34,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * 用户服务
@@ -121,7 +121,6 @@ public class UserServiceImpl implements UserService {
 
         if (RoleCodeEnum.ADMIN.getDefaultUserId().equals(param.getId())) {
             data.setStatus(null);
-            data.setEmail(null);
             data.setUserName(null);
             data.setRoleCode(null);
         }

@@ -2,8 +2,6 @@ package ai.chat2db.server.start.controller.oauth;
 
 import ai.chat2db.server.domain.api.enums.RoleCodeEnum;
 import ai.chat2db.server.domain.api.enums.ValidStatusEnum;
-import jakarta.annotation.Resource;
-
 import ai.chat2db.server.domain.api.model.User;
 import ai.chat2db.server.domain.api.service.UserService;
 import ai.chat2db.server.start.controller.oauth.request.LoginRequest;
@@ -12,19 +10,14 @@ import ai.chat2db.server.tools.base.wrapper.result.ActionResult;
 import ai.chat2db.server.tools.base.wrapper.result.DataResult;
 import ai.chat2db.server.tools.common.model.LoginUser;
 import ai.chat2db.server.tools.common.util.ContextUtils;
-
 import cn.dev33.satoken.context.SaHolder;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.util.SaTokenConsts;
 import cn.hutool.crypto.digest.DigestUtil;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
 
@@ -53,11 +46,6 @@ public class OauthController {
         User user = userService.query(request.getUserName()).getData();
         this.validateUser(user);
 
-        // Successfully logged in without modifying the administrator password
-        if (this.validateAdmin(user)) {
-            return DataResult.of(doLogin(user));
-        }
-
         if (!DigestUtil.bcryptCheck(request.getPassword(), user.getPassword())) {
             throw new BusinessException("oauth.passwordIncorrect");
         }
@@ -65,10 +53,6 @@ public class OauthController {
         return DataResult.of(doLogin(user));
     }
 
-    private boolean validateAdmin(final @NotNull User user) {
-        return RoleCodeEnum.ADMIN.getDefaultUserId().equals(user.getId()) && RoleCodeEnum.ADMIN.getPassword().equals(
-                user.getPassword());
-    }
 
     private void validateUser(final User user) {
         if (Objects.isNull(user)) {
