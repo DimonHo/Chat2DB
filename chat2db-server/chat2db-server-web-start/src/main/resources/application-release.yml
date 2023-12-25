@@ -3,6 +3,9 @@
 #    # 配置自带数据库的相对路径
 #    url: jdbc:h2:~/.chat2db/db/chat2db;MODE=MYSQL;FILE_LOCK=NO
 #    driver-class-name: org.h2.Driver
+spring:
+  flyway:
+    locations: classpath:db/mysql-migration
 # 端口号
 server:
   port: 10824

@@ -1,11 +1,8 @@
 package ai.chat2db.server.domain.repository;
 
-import ai.chat2db.server.domain.repository.entity.DataSourceDO;
-import ai.chat2db.server.domain.repository.mapper.DataSourceMapper;
 import ai.chat2db.server.tools.common.model.ConfigJson;
 import ai.chat2db.server.tools.common.util.ConfigUtils;
-import cn.hutool.core.lang.UUID;
-import com.alibaba.fastjson2.JSON;
+import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.core.MybatisConfiguration;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
@@ -112,9 +109,11 @@ public class Dbutils {
                 configJson.getLatestStartupSuccessVersion())) {
             return;
         }else {
+            org.springframework.core.env.Environment env = SpringUtil.getBean(org.springframework.core.env.Environment.class);
+            String locations = env.getProperty("spring.flyway.locations","classpath:db/migration");
             Flyway flyway = Flyway.configure()
                     .dataSource(dataSource)
-                    .locations("classpath:db/migration")
+                    .locations(locations)
                     .load();
             flyway.migrate();
 
@@ -143,15 +142,18 @@ public class Dbutils {
      */
     private static DataSource initDataSource() {
         HikariDataSource dataSource = new HikariDataSource();
-        String environment = StringUtils.defaultString(System.getProperty("spring.profiles.active"), "dev");
+        org.springframework.core.env.Environment env = SpringUtil.getBean(org.springframework.core.env.Environment.class);
+        String environment = StringUtils.defaultString(env.getProperty("spring.profiles.active"), "dev");
         if ("dev".equalsIgnoreCase(environment)) {
-            dataSource.setJdbcUrl("jdbc:h2:file:~/.chat2db/db/chat2db_dev;MODE=MYSQL");
+            dataSource.setJdbcUrl("jdbc:mysql://root:123456@172.29.3.66:3306/chat2db");
+            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         }else if ("test".equalsIgnoreCase(environment)) {
             dataSource.setJdbcUrl("jdbc:h2:file:~/.chat2db/db/chat2db_test;MODE=MYSQL");
+            dataSource.setDriverClassName("org.h2.Driver");
         }else {
-            dataSource.setJdbcUrl("jdbc:h2:~/.chat2db/db/chat2db;MODE=MYSQL;FILE_LOCK=NO");
+            dataSource.setJdbcUrl("jdbc:mysql://chat2db:RrF33VNHQg8BBKlH!@l-overseas-app-base-rw-gd-mysql.hw.tanjingpaas.com:3306/chat2db");
+            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
         }
-        dataSource.setDriverClassName("org.h2.Driver");
         dataSource.setIdleTimeout(60000);
         dataSource.setAutoCommit(true);
         dataSource.setMaximumPoolSize(500);

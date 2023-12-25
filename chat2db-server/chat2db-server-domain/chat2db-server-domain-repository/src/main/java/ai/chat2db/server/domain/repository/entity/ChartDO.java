@@ -1,12 +1,14 @@
 package ai.chat2db.server.domain.repository.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.io.Serializable;
+import java.util.Date;
 
 /**
  * <p>
@@ -52,6 +54,7 @@ public class ChartDO implements Serializable {
     /**
      * 图表信息
      */
+    @TableField("`schema`")
     private String schema;
 
     /**
