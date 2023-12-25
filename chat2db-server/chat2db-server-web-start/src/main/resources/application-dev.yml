@@ -1,6 +1,10 @@
 spring:
-  flyway:
-    locations: classpath:db/mysql-migration
+  datasource:
+    # docker run --name=mysql --env=MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -p 33060:33060 -d mysql:latest --lower_case_table_names=1
+    # 配置自带数据库的相对路径
+    url: jdbc:mysql://root:123456@172.29.3.66:3306/chat2db
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
 server:
   port: 10821
 

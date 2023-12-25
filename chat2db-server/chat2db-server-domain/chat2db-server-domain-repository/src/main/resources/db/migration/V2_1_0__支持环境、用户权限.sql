@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS `environment`
     `gmt_modified`     datetime            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     `create_user_id`   bigint(20) unsigned NOT NULL COMMENT '创建人用户id',
     `modified_user_id` bigint(20) unsigned NOT NULL COMMENT '修改人用户id',
-    `name`             varchar(128)                 DEFAULT NOT NULL COMMENT '环境名称',
+    `name`             varchar(128)                 DEFAULT NULL COMMENT '环境名称',
     `short_name`       varchar(128)                 DEFAULT NULL COMMENT '环境缩写',
     `color`            varchar(32)                  DEFAULT NULL COMMENT '颜色',
     PRIMARY KEY (`id`)
@@ -47,7 +47,7 @@ ALTER TABLE `dbhub_user`
 update dbhub_user
 set role_code= 'DESKTOP',user_name='_desktop_default_user_name',password='_desktop_default_user_name',nick_name='Desktop User'
 where id = 1;
-INSERT INTO DBHUB_USER (USER_NAME, PASSWORD, NICK_NAME, EMAIL, ROLE_CODE) VALUES ('chat2db', 'chat2db', 'Administrator', null, 'ADMIN');
+INSERT INTO dbhub_user (user_name, password, nick_name, email, role_code) VALUES ('chat2db', '$2a$10$6De.QqIRtxStdStH2UelGepPKscfuGIU6iWKCiLfMlIqKM9NcKcja', 'Administrator', 'chat2db@qq.com', 'ADMIN');
 
 create UNIQUE INDEX uk_user_user_name on dbhub_user (user_name);
 
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS `team`
     `gmt_modified`     datetime            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     `create_user_id`   bigint(20) unsigned NOT NULL COMMENT '创建人用户id',
     `modified_user_id` bigint(20) unsigned NOT NULL COMMENT '修改人用户id',
-    `code`             varchar(128)                 DEFAULT NOT NULL COMMENT '团队编码',
+    `code`             varchar(128)                 DEFAULT NULL COMMENT '团队编码',
     `name`             varchar(512)                 DEFAULT NULL COMMENT '团队名称',
     `status`           varchar(32)         NOT NULL DEFAULT 'VALID' COMMENT '团队状态',
     `description`      text                         DEFAULT NULL COMMENT '团队描述',

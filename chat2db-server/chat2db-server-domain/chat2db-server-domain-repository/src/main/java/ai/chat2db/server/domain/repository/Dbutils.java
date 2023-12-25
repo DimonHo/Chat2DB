@@ -96,7 +96,7 @@ public class Dbutils {
         //构建sqlSessionFactory
         sqlSessionFactory = builder.build(configuration);
 
-        initFlyway(dataSource);
+//        initFlyway(dataSource);
         //创建session
 
     }
@@ -143,17 +143,8 @@ public class Dbutils {
     private static DataSource initDataSource() {
         HikariDataSource dataSource = new HikariDataSource();
         org.springframework.core.env.Environment env = SpringUtil.getBean(org.springframework.core.env.Environment.class);
-        String environment = StringUtils.defaultString(env.getProperty("spring.profiles.active"), "dev");
-        if ("dev".equalsIgnoreCase(environment)) {
-            dataSource.setJdbcUrl("jdbc:mysql://root:123456@172.29.3.66:3306/chat2db");
-            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        }else if ("test".equalsIgnoreCase(environment)) {
-            dataSource.setJdbcUrl("jdbc:h2:file:~/.chat2db/db/chat2db_test;MODE=MYSQL");
-            dataSource.setDriverClassName("org.h2.Driver");
-        }else {
-            dataSource.setJdbcUrl("jdbc:mysql://chat2db:RrF33VNHQg8BBKlH!@l-overseas-app-base-rw-gd-mysql.hw.tanjingpaas.com:3306/chat2db");
-            dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        }
+        dataSource.setJdbcUrl(env.getProperty("spring.datasource.url"));
+        dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
         dataSource.setIdleTimeout(60000);
         dataSource.setAutoCommit(true);
         dataSource.setMaximumPoolSize(500);
