@@ -70,33 +70,9 @@ public class RdbDmlController {
         DlExecuteParam param = rdbWebConverter.request2param(request);
         ListResult<ExecuteResult> resultDTOListResult = dlTemplateService.execute(param);
         List<ExecuteResultVO> resultVOS = rdbWebConverter.dto2vo(resultDTOListResult.getData());
-        String type = Chat2DBContext.getConnectInfo().getDbType();
-        String clientId = getClientId();
-        String sqlContent = request.getSql();
-        executorService.submit(() -> {
-            try {
-                addOperationLog(clientId, type, sqlContent, resultDTOListResult.getErrorMessage(), resultDTOListResult.getSuccess(), resultVOS);
-            } catch (Exception e) {
-                // do nothing
-            }
-        });
         return ListResult.of(resultVOS);
     }
 
-    private void addOperationLog(String clientId, String sqlType, String sqlContent, String errorMessage, Boolean isSuccess, List<ExecuteResultVO> executeResultVOS) {
-        SqlExecuteHistoryCreateRequest createRequest = new SqlExecuteHistoryCreateRequest();
-        createRequest.setClientId(clientId);
-        createRequest.setErrorMessage(errorMessage);
-        createRequest.setDatabaseType(sqlType);
-        createRequest.setSqlContent(sqlContent);
-        createRequest.setExecuteStatus(isSuccess ? "success" : "fail");
-        executeResultVOS.forEach(executeResultVO -> {
-            createRequest.setSqlType(executeResultVO.getSqlType());
-            createRequest.setDuration(executeResultVO.getDuration());
-            createRequest.setTableName(executeResultVO.getTableName());
-            gatewayClientService.addOperationLog(createRequest);
-        });
-    }
 
     /**
      * query chat2db apikey
@@ -123,10 +99,12 @@ public class RdbDmlController {
         DlExecuteParam param = rdbWebConverter.request2param(request);
         // 解析sql
         String type = Chat2DBContext.getConnectInfo().getDbType();
+        MetaData metaData = Chat2DBContext.getMetaData();
         if (DataSourceTypeEnum.MONGODB.getCode().equals(type)) {
             param.setSql("db." + request.getTableName() + ".find()");
-        } else {
-            MetaData metaData = Chat2DBContext.getMetaData();
+        } else if (DataSourceTypeEnum.SQLSERVER.getCode().equals(type)){
+            param.setSql("select * from" + metaData.getMetaDataName(request.getSchemaName()) + "." + metaData.getMetaDataName(request.getTableName()));
+        }else {
             // 拼接`tableName`，避免关键字被占用问题
             param.setSql("select * from " + metaData.getMetaDataName(request.getTableName()));
         }
@@ -148,16 +126,6 @@ public class RdbDmlController {
             return DataResult.error(result.getErrorCode(), result.getErrorMessage());
         }
         ExecuteResultVO executeResultVO = rdbWebConverter.dto2vo(result.getData());
-        String type = Chat2DBContext.getConnectInfo().getDbType();
-        String sqlContent = request.getSql();
-        String clientId = getClientId();
-        executorService.submit(() -> {
-            try {
-                addOperationLog(clientId, type, sqlContent, result.getErrorMessage(), result.getSuccess(), Lists.newArrayList(executeResultVO));
-            } catch (Exception e) {
-                // do nothing
-            }
-        });
         return DataResult.of(executeResultVO);
 
     }
