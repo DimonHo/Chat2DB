@@ -3,15 +3,16 @@ package ai.chat2db.spi.jdbc;
 import java.sql.Connection;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
+import ai.chat2db.server.tools.base.wrapper.result.PageResult;
 import ai.chat2db.spi.CommandExecutor;
 import ai.chat2db.spi.MetaData;
 import ai.chat2db.spi.SqlBuilder;
 import ai.chat2db.spi.ValueHandler;
 import ai.chat2db.spi.model.*;
 import ai.chat2db.spi.sql.SQLExecutor;
+import com.google.common.collect.Lists;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -46,6 +47,16 @@ public class DefaultMetaService implements MetaData {
     @Override
     public List<Table> tables(Connection connection, String databaseName, String schemaName, String tableName) {
         return SQLExecutor.getInstance().tables(connection, StringUtils.isEmpty(databaseName) ? null : databaseName, StringUtils.isEmpty(schemaName) ? null : schemaName, tableName, new String[]{"TABLE","SYSTEM TABLE"});
+    }
+
+    @Override
+    public PageResult<Table> tables(Connection connection, String databaseName, String schemaName, String tableNamePattern, int pageNo, int pageSize) {
+        List<Table> tables = tables(connection, databaseName, schemaName, tableNamePattern);
+        if(CollectionUtils.isEmpty(tables)){
+            return PageResult.of(tables,0L,pageNo, pageSize);
+        }
+        List result = tables.stream().skip((pageNo - 1) * pageSize).limit(pageSize).collect(Collectors.toList());
+        return PageResult.of(result, (long) tables.size(), pageNo, pageSize);
     }
 
     @Override
@@ -141,5 +152,15 @@ public class DefaultMetaService implements MetaData {
     @Override
     public CommandExecutor getCommandExecutor() {
         return SQLExecutor.getInstance();
+    }
+
+    @Override
+    public List<String> getSystemDatabases() {
+        return Lists.newArrayList();
+    }
+
+    @Override
+    public List<String> getSystemSchemas() {
+        return Lists.newArrayList();
     }
 }
