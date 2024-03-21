@@ -1,4 +1,7 @@
 spring:
+  flyway:
+    locations: classpath:db/migration
+    enabled: false
   datasource:
     # docker run --name=mysql --env=MYSQL_ROOT_PASSWORD=123456 -p 3306:3306 -p 33060:33060 -d mysql:latest --lower_case_table_names=1
     # 配置自带数据库的相对路径
@@ -7,8 +10,7 @@ spring:
 
 server:
   port: 10821
-  flyway:
-    locations: classpath:db/migration
+
 chat2db:
   gateway:
     base-url: http://test.sqlgpt.cn/gateway

@@ -93,10 +93,13 @@ function MainPage() {
     } else {
       setAppTitleBarRightComponent(false);
     }
+    if (userInfo) {
+        handleInitPage();
+    }
     return () => {
       setAppTitleBarRightComponent(false);
     };
-  }, [mainPageActiveTab]);
+  }, [mainPageActiveTab, userInfo]);
 
   useEffect(() => {
     handleInitPage();
