@@ -40,7 +40,7 @@ const antdLightTheme = {
   antdPrimaryColor,
   token: {
     ...commonToken,
-    // colorText: "#232429",
+    colorText: "#232429",
     colorTextBase: '#232429',
     colorBgBase: '#ffffff',
     colorHoverBg: 'rgba(0, 0, 0, 0.03)',

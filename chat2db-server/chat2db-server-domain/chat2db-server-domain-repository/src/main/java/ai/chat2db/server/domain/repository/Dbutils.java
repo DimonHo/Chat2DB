@@ -17,13 +17,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.logging.slf4j.Slf4jImpl;
-import org.apache.ibatis.mapping.Environment;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.apache.ibatis.session.SqlSessionFactoryBuilder;
 import org.apache.ibatis.transaction.jdbc.JdbcTransactionFactory;
 import org.flywaydb.core.Flyway;
+import org.springframework.core.env.Environment;
 
 import javax.sql.DataSource;
 import java.io.File;
@@ -40,6 +40,7 @@ import java.util.jar.JarFile;
 public class Dbutils {
 
     private static final ThreadLocal<SqlSession> SQL_SESSION_THREAD_LOCAL = new ThreadLocal<>();
+    private static Environment environment;
 
     public static void init() {
     }
@@ -61,6 +62,7 @@ public class Dbutils {
 
     static {
         try {
+            environment = SpringUtil.getBean(Environment.class);
             before();
         } catch (IOException e) {
             log.error("Dbutils error", e);
@@ -89,16 +91,16 @@ public class Dbutils {
         //设置超类mapper
         globalConfig.setSuperMapperClass(BaseMapper.class);
         DataSource dataSource = initDataSource();
-        Environment environment = new Environment("1", new JdbcTransactionFactory(), dataSource);
-        configuration.setEnvironment(environment);
+        org.apache.ibatis.mapping.Environment ibatisEnv = new org.apache.ibatis.mapping.Environment("1", new JdbcTransactionFactory(), dataSource);
+        configuration.setEnvironment(ibatisEnv);
         //设置数据源
         registryMapperXml(configuration, "mapper");
         //构建sqlSessionFactory
         sqlSessionFactory = builder.build(configuration);
-
-//        initFlyway(dataSource);
-        //创建session
-
+        boolean isFlywayEnabled = environment.getProperty("spring.flyway.enabled", Boolean.class, false);
+        if (isFlywayEnabled) {
+            initFlyway(dataSource);
+        }
     }
 
     private static void initFlyway(DataSource dataSource) {
@@ -108,19 +110,16 @@ public class Dbutils {
         if (StringUtils.isNotBlank(currentVersion) && configJson != null && StringUtils.equals(currentVersion,
                 configJson.getLatestStartupSuccessVersion())) {
             return;
-        }else {
-            org.springframework.core.env.Environment env = SpringUtil.getBean(org.springframework.core.env.Environment.class);
-            String locations = env.getProperty("spring.flyway.locations","classpath:db/migration");
-            Flyway flyway = Flyway.configure()
-                    .dataSource(dataSource)
-                    .locations(locations)
-                    .load();
-            flyway.migrate();
-
-
-            configJson.setLatestStartupSuccessVersion(currentVersion);
-            ConfigUtils.setConfig(configJson);
         }
+        String locations = environment.getProperty("spring.flyway.locations", "classpath:db/migration");
+        Flyway flyway = Flyway.configure()
+                .dataSource(dataSource)
+                .locations(locations)
+                .load();
+        flyway.migrate();
+        configJson.setLatestStartupSuccessVersion(currentVersion);
+        ConfigUtils.setConfig(configJson);
+
     }
 
     /**
@@ -142,9 +141,8 @@ public class Dbutils {
      */
     private static DataSource initDataSource() {
         HikariDataSource dataSource = new HikariDataSource();
-        org.springframework.core.env.Environment env = SpringUtil.getBean(org.springframework.core.env.Environment.class);
-        dataSource.setJdbcUrl(env.getProperty("spring.datasource.url"));
-        dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
+        dataSource.setJdbcUrl(environment.getProperty("spring.datasource.url"));
+        dataSource.setDriverClassName(environment.getProperty("spring.datasource.driver-class-name"));
         dataSource.setIdleTimeout(60000);
         dataSource.setAutoCommit(true);
         dataSource.setMaximumPoolSize(500);

@@ -1,5 +1,6 @@
 import 'umi/typings';
 import { IVersionResponse } from '@/typings';
+import Tooltip from "antd/es/tooltip";
 
 declare module 'monaco-editor/esm/vs/basic-languages/sql/sql';
 declare module 'monaco-editor/esm/vs/language/typescript/ts.worker.js';
@@ -44,3 +45,4 @@ declare global {
   const __ENV__: string;
   const __APP_PORT__: string;
 }
+

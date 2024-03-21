@@ -82,7 +82,6 @@ const SupportBaseTable: any = styled(BaseTable)`
     --header-highlight-bgcolor: var(--color-bg-subtle);
     --color: var(--color-text);
     --header-color: var(--color-text);
-    --lock-shadow: rgb(37 37 37 / 0.5) 0 0 6px 2px;
     --border-color: var(--color-border-secondary);
     --cell-padding: 0px;
     --row-height: 32px;
