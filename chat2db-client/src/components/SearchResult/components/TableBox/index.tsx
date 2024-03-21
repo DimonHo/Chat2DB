@@ -6,6 +6,8 @@ import classnames from 'classnames';
 import lodash from 'lodash';
 import { v4 as uuid } from 'uuid';
 import i18n from '@/i18n';
+import ScreeningResult from '@/components/SearchResult/components/ScreeningResult';
+// import { Context } from '@/components/SearchResult';
 
 // 样式
 import styles from './index.less';
@@ -49,6 +51,7 @@ interface ITableProps {
   executeSqlParams: any;
   tableBoxId: string;
   isActive?: boolean;
+  concealTabHeader?: boolean; // concealTabHeader 是否隐藏tab头部, 目前来说隐藏头部都是单表查询。需要显示筛选
 }
 
 interface IViewTableCellData {
@@ -102,7 +105,8 @@ const defaultPaginationConfig: IResultConfig = {
 export const TableContext = React.createContext({} as any);
 
 export default function TableBox(props: ITableProps) {
-  const { className, outerQueryResultData, isActive } = props;
+  // const {} = useContext(Context);
+  const { className, outerQueryResultData, isActive, concealTabHeader } = props;
   const [viewTableCellData, setViewTableCellData] = useState<IViewTableCellData | null>(null);
   const [, contextHolder] = message.useMessage();
   const [paginationConfig, setPaginationConfig] = useState<IResultConfig>(defaultPaginationConfig);
@@ -245,11 +249,9 @@ export default function TableBox(props: ITableProps) {
 
   function monacoEditorEditData() {
     const editorData = monacoEditorRef?.current?.getAllContent();
-    // 获取原始的该单元格的数据
-    // let _oldData = '';
     const { rowId, colId } = viewTableCellData!;
-    oldDataList.forEach((item) => {
-      if (item[0] === rowId) {
+    oldTableData.forEach((item) => {
+      if (item[colNoCode] === rowId) {
         if (item[colId] !== editorData) {
           const newTableData = lodash.cloneDeep(tableData);
           let newRowDataList: any = [];
@@ -260,13 +262,12 @@ export default function TableBox(props: ITableProps) {
             }
           });
           setTableData(newTableData);
-
           // 添加更新记录
           setUpdateData([
             ...updateData,
             {
               type: CRUD.UPDATE,
-              oldDataList: item,
+              oldDataList: Object.keys(item).map((_i) => item[_i]),
               dataList: newRowDataList,
               rowId,
             },
@@ -658,6 +659,7 @@ export default function TableBox(props: ITableProps) {
         // title: <div>{name}</div>,
         render: (value: any, rowData) => {
           const rowId = rowData[colNoCode];
+          const content = renderTableCellValue(value);
           return (
             <div
               data-chat2db-general-can-copy-element
@@ -681,7 +683,10 @@ export default function TableBox(props: ITableProps) {
                   }}
                 />
               ) : (
-                <div className={styles.tableItemContent}>{renderTableCellValue(value)}</div>
+                <>
+                  <div className={styles.tableItemContent}>{content}</div>
+                  <div className={styles.previewTableItemContent}>{content}</div>
+                </>
               )}
             </div>
           );
@@ -1046,25 +1051,30 @@ export default function TableBox(props: ITableProps) {
               </Dropdown>
             </div>
           </div>
-          <RightClickMenu menuList={rowRightClickMenu}>
-            <div
-              ref={tableBoxRef}
-              className={classnames(styles.supportBaseTableBox, { [styles.supportBaseTableBoxHidden]: tableLoading })}
-            >
-              {allDataReady && (
-                <>
-                  {tableLoading && <Spin className={styles.supportBaseTableSpin} />}
-                  <SupportBaseTable
-                    className={classnames('supportBaseTable', props.className, styles.table)}
-                    components={{ EmptyContent: () => <h2>{i18n('common.text.noData')}</h2> }}
-                    isStickyHead
-                    stickyTop={31}
-                    {...pipeline.getProps()}
-                  />
-                </>
-              )}
-            </div>
-          </RightClickMenu>
+          {concealTabHeader && <ScreeningResult getTableData={getTableData} promptWord={queryResultData.headerList} />}
+          {isActive ? (
+            <RightClickMenu menuList={rowRightClickMenu}>
+              <div
+                ref={tableBoxRef}
+                className={classnames(styles.supportBaseTableBox, { [styles.supportBaseTableBoxHidden]: tableLoading })}
+              >
+                {allDataReady && (
+                  <>
+                    {tableLoading && <Spin className={styles.supportBaseTableSpin} />}
+                    <SupportBaseTable
+                      className={classnames('supportBaseTable', props.className, styles.table)}
+                      components={{ EmptyContent: () => <h2>{i18n('common.text.noData')}</h2> }}
+                      isStickyHead
+                      stickyTop={31}
+                      {...pipeline.getProps()}
+                    />
+                  </>
+                )}
+              </div>
+            </RightClickMenu>
+          ) : (
+            <div className={styles.supportBaseTableBox} />
+          )}
           <StatusBar
             description={queryResultData.description}
             duration={queryResultData.duration}
@@ -1085,6 +1095,7 @@ export default function TableBox(props: ITableProps) {
             text: transformInputValue(viewTableCellData?.value),
             range: 'reset',
           }}
+          language="plaintext"
           options={{
             lineNumbers: 'off',
             readOnly: !queryResultData.canEdit,
@@ -1095,7 +1106,6 @@ export default function TableBox(props: ITableProps) {
   }, [queryResultData, viewTableCellData]);
 
   return (
-    isActive ?
     <div className={classnames(className, styles.tableBox, { [styles.noDataTableBox]: !tableData.length })}>
       {renderContent()}
       <Modal
@@ -1142,6 +1152,5 @@ export default function TableBox(props: ITableProps) {
       </Modal>
       {contextHolder}
     </div>
-    : false
   );
 }

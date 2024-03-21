@@ -15,6 +15,10 @@ import {
   registerIntelliSenseKeyword,
   registerIntelliSenseTable,
   registerIntelliSenseDatabase,
+  resetSenseKeyword,
+  resetSenseTable,
+  resetSenseDatabase,
+  resetSenseField,
 } from '@/utils/IntelliSense';
 
 interface IProps {
@@ -42,6 +46,15 @@ const SelectBoundInfo = memo((props: IProps) => {
   const [schemaList, setSchemaList] = useState<IOption<string>[]>([emptyOption]);
   const [allTableList, setAllTableList] = useState<any>([]);
 
+  useEffect(() => {
+    if(!isActive){
+      resetSenseKeyword();
+      resetSenseTable();
+      resetSenseDatabase();
+      resetSenseField();
+    }
+  }, [isActive]);
+
   const dataSourceList = useMemo(() => {
     return (
       connectionList?.map((item) => ({
@@ -55,16 +68,19 @@ const SelectBoundInfo = memo((props: IProps) => {
 
   const supportDatabase = useMemo(() => {
     return connectionList?.find((item) => item.id === boundInfo.dataSourceId)?.supportDatabase;
-  }, [boundInfo.dataSourceId,connectionList]);
+  }, [boundInfo.dataSourceId, connectionList]);
 
   const supportSchema = useMemo(() => {
     return connectionList?.find((item) => item.id === boundInfo.dataSourceId)?.supportSchema;
-  }, [boundInfo.dataSourceId,connectionList]);
+  }, [boundInfo.dataSourceId, connectionList]);
 
   // 编辑器绑定的数据库类型变化时，重新注册智能提示
   useEffect(() => {
+    if(!isActive){
+      return
+    }
     registerIntelliSenseKeyword(boundInfo.databaseType);
-  }, [boundInfo.dataSourceId]);
+  }, [boundInfo.dataSourceId, isActive]);
 
   // 当数据源变化时，重新获取数据库列表
   useEffect(() => {
@@ -75,9 +91,6 @@ const SelectBoundInfo = memo((props: IProps) => {
       setSchemaList([]);
       setDatabaseNameList([]);
       getDatabaseList();
-    } else {
-      setSchemaList([]);
-      getSchemaList();
     }
   }, [boundInfo.dataSourceId, isActive]);
 
@@ -87,12 +100,13 @@ const SelectBoundInfo = memo((props: IProps) => {
       return;
     }
     if (supportSchema) {
+      setSchemaList([]);
       getSchemaList();
     }
     if (!supportSchema && boundInfo.databaseName) {
       getAllTableNameList(boundInfo.dataSourceId, boundInfo.databaseName);
     }
-  }, [boundInfo.databaseName, isActive]);
+  }, [boundInfo.databaseName, isActive, supportSchema]);
 
   useEffect(() => {
     if (!isActive || boundInfo.connectable === false) {
@@ -101,7 +115,7 @@ const SelectBoundInfo = memo((props: IProps) => {
     if (supportSchema && boundInfo.schemaName) {
       getAllTableNameList(boundInfo.dataSourceId, boundInfo.databaseName, boundInfo.schemaName);
     }
-  }, [boundInfo.schemaName, isActive]);
+  }, [boundInfo.schemaName, isActive, supportSchema]);
 
   // 获取数据库列表
   const getDatabaseList = () => {

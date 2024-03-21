@@ -24,6 +24,7 @@ import useClickAndDoubleClick from '@/hooks/useClickAndDoubleClick';
 import { useConnectionStore, getConnectionList } from '@/pages/main/store/connection';
 import { setMainPageActiveTab } from '@/pages/main/store/main';
 import { setCurrentConnectionDetails } from '@/pages/main/workspace/store/common';
+import { getOpenConsoleList } from '@/pages/main/workspace/store/console';
 
 import styles from './index.less';
 
@@ -75,7 +76,10 @@ const ConnectionsPage = () => {
       // 禁止冒泡到menuItem
       e.domEvent?.stopPropagation?.();
       connectionService.remove({ id: t.id }).then(() => {
-        getConnectionList();
+        getConnectionList().then(() => {
+          // 连接删除后需要更新下 consoleList
+          getOpenConsoleList();
+        });
         if (connectionActiveId === t.id) {
           setConnectionActiveId(null);
           setConnectionDetail(null);
@@ -88,11 +92,24 @@ const ConnectionsPage = () => {
       handleMenuItemDoubleClick(t);
     };
 
+    const copyConnection = (e) => {
+      e.domEvent?.stopPropagation?.();
+      connectionService.clone({ id: t.id }).then((res) => {
+        getConnectionList();
+        setConnectionActiveId(res);
+      });
+    }
+
     return [
       {
         key: 'enterWorkSpace',
         label: <MenuLabel icon="&#xec57;" label={i18n('connection.button.connect')} />,
         onClick: enterWorkSpace,
+      },
+      {
+        key: 'copyConnection',
+        label: <MenuLabel icon="&#xec7a;" label={i18n('common.button.copy')} />,
+        onClick: copyConnection,
       },
       {
         key: 'delete',
