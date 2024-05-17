@@ -33,30 +33,39 @@ public class DMMetaData extends DefaultMetaService implements MetaData {
         return "\"" + tableName + "\"";
       }
 
-    public String tableDDL(Connection connection, String databaseName, String schemaName, String tableName) {
-        String sql = """
-                     SELECT
-                         (SELECT comments FROM user_tab_comments WHERE table_name = '%s') AS comments,
-                         (SELECT dbms_metadata.get_ddl('TABLE', '%s', '%s') FROM dual) AS ddl
-                     FROM dual;
-                     """;
-        String selectObjectDDLSQL = String.format(sql, tableName, tableName, schemaName);
-        return SQLExecutor.getInstance().execute(connection, selectObjectDDLSQL, resultSet -> {
-            try {
-                if (resultSet.next()) {
-                    String ddl = resultSet.getString("ddl");
-                    String comment = resultSet.getString("comments");
-                    if (StringUtils.isNotBlank(comment)) {
-                        return ddl +"\n"+ "COMMENT ON TABLE " + format(schemaName) + "." + format(tableName) +
-                                " IS " + "'" + comment + "';";
-                    }
-                    return ddl;
-                }
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
+    private static String tableDDL = "SELECT dbms_metadata.get_ddl('TABLE', '%s','%s') as ddl FROM dual ;";
+    private static String tableComment = "select COMMENTS from dba_tab_comments where OWNER='%s' and TABLE_TYPE='TABLE' and TABLE_NAME='%s';";
+    private static String columnComment = "SELECT COLNAME,COMMENT$ FROM SYS.SYSCOLUMNCOMMENTS where SCHNAME = '%s' and TVNAME = '%s' and TABLE_TYPE = 'TABLE';";
+
+    public String tableDDL(Connection connection, String databaseName, String schemaName, String tableName)  {
+        String tableDDLSql = String.format(tableDDL, tableName, schemaName);
+        String tableCommentSql = String.format(tableComment, schemaName, tableName);
+        String columnCommentSql = String.format(columnComment, schemaName, tableName);
+        StringBuilder ddlBuilder = new StringBuilder();
+        SQLExecutor.getInstance().execute(connection, tableDDLSql, resultSet -> {
+            if (resultSet.next()) {
+                String ddl = resultSet.getString("ddl");
+                ddlBuilder.append(ddl).append("\n");
             }
-            return null;
         });
+        SQLExecutor.getInstance().execute(connection, tableCommentSql, resultSet -> {
+            if (resultSet.next()) {
+                String comments = resultSet.getString("COMMENTS");
+                if (Objects.nonNull(comments)) {
+                    ddlBuilder.append("COMMENT ON TABLE ").append(format(schemaName)).append(".").append(format(tableName))
+                            .append(" IS ").append(comments).append(";").append("\n");
+                }
+            }
+        });
+        SQLExecutor.getInstance().execute(connection, columnCommentSql, resultSet -> {
+            while (resultSet.next()) {
+                String columnName = resultSet.getString("COLNAME");
+                String comment = resultSet.getString("COMMENT$");
+                ddlBuilder.append("COMMENT ON COLUMN ").append(format(schemaName)).append(".").append(format(tableName))
+                        .append(".").append(format(columnName)).append(" IS ").append("'").append(comment).append("';").append("\n");
+            }
+        });
+        return ddlBuilder.toString();
     }
 
     private static String ROUTINES_SQL

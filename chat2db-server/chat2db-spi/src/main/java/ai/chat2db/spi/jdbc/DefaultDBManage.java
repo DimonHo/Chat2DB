@@ -1,7 +1,10 @@
 package ai.chat2db.spi.jdbc;
 
 import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import ai.chat2db.server.tools.base.excption.BusinessException;
 import ai.chat2db.server.tools.common.exception.ConnectionException;
@@ -42,29 +45,15 @@ public class DefaultDBManage implements DBManage {
                 url = url.replace(host, "127.0.0.1").replace(port, ssh.getLocalPort());
             }
         } catch (Exception e) {
+
             throw new ConnectionException("connection.ssh.error", null, e);
         }
         try {
             connection = IDriverManager.getConnection(url, connectInfo.getUser(), connectInfo.getPassword(),
                     connectInfo.getDriverConfig(), connectInfo.getExtendMap());
 
-        } catch (Exception e1) {
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException e) {
-                }
-            }
-            if (session != null) {
-                try {
-                    session.delPortForwardingL(Integer.parseInt(ssh.getLocalPort()));
-                } catch (JSchException e) {
-                }
-                try {
-                    session.disconnect();
-                } catch (Exception e) {
-                }
-            }
+        }catch (Exception e1) {
+            close(connection,session,ssh);
             throw new BusinessException("connection.error", null, e1);
         }
         connectInfo.setSession(session);
@@ -73,6 +62,24 @@ public class DefaultDBManage implements DBManage {
             connectDatabase(connection, connectInfo.getDatabaseName());
         }
         return connection;
+    }
+    private void close(Connection connection,Session session,SSHInfo ssh){
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+            }
+        }
+        if (session != null) {
+            try {
+                session.delPortForwardingL(Integer.parseInt(ssh.getLocalPort()));
+            } catch (JSchException e) {
+            }
+            try {
+                session.disconnect();
+            } catch (Exception e) {
+            }
+        }
     }
 
     private Session getSession(SSHInfo ssh) {
@@ -142,11 +149,43 @@ public class DefaultDBManage implements DBManage {
     public String exportDatabase(Connection connection, String databaseName, String schemaName, boolean containData) throws SQLException {
         return null;
     }
-
+    public String exportDatabaseData(Connection connection, String databaseName, String schemaName, String tableName) throws SQLException {
+        StringBuilder sqlBuilder = new StringBuilder();
+        exportTableData(connection, schemaName,tableName, sqlBuilder);
+        return sqlBuilder.toString();
+    }
 
     @Override
     public void dropTable(Connection connection, String databaseName, String schemaName, String tableName) {
         String sql = "DROP TABLE " + tableName;
         SQLExecutor.getInstance().execute(connection, sql, resultSet -> null);
+    }
+
+    public void exportTableData(Connection connection,String schemaName, String tableName, StringBuilder sqlBuilder) throws SQLException {
+        String sql;
+        if (Objects.isNull(schemaName)) {
+            sql = String.format("select * from %s", tableName);
+        }else{
+            sql = String.format("select * from %s.%s",schemaName,tableName);
+        }
+        try (ResultSet resultSet = connection.createStatement().executeQuery(sql)) {
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            while (resultSet.next()) {
+                sqlBuilder.append("INSERT INTO ").append(tableName).append(" VALUES (");
+                for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                    String value = resultSet.getString(i);
+                    if (Objects.isNull(value)) {
+                        sqlBuilder.append("NULL");
+                    } else {
+                        sqlBuilder.append("'").append(value).append("'");
+                    }
+                    if (i < metaData.getColumnCount()) {
+                        sqlBuilder.append(", ");
+                    }
+                }
+                sqlBuilder.append(");\n");
+            }
+            sqlBuilder.append("\n");
+        }
     }
 }
